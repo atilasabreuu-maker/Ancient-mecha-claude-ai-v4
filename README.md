@@ -1236,7 +1236,14 @@ end
 local function setAvatarHidden()
 	for i = #avatarParts, 1, -1 do
 		local p = avatarParts[i]
-		if p.Parent then p.LocalTransparencyModifier = 1 else table.remove(avatarParts, i) end
+		if not p.Parent then
+			table.remove(avatarParts, i)
+		elseif p:FindFirstAncestor("Operador") then
+			-- Defesa extra: nunca ocultar peças do operador personalizado.
+			table.remove(avatarParts, i)
+		else
+			p.LocalTransparencyModifier = 1
+		end
 	end
 end
 
@@ -1941,7 +1948,12 @@ local function setupCharacter(char)
 		if d:IsA("BasePart") or d:IsA("Decal") then table.insert(avatarParts, d) end
 	end
 	table.insert(S.conns, char.DescendantAdded:Connect(function(d)
-		if d:IsA("BasePart") or d:IsA("Decal") then table.insert(avatarParts, d) end
+		-- IMPORTANTE: o operador é filho do Character, mas não deve ser
+		-- incluído na lista de peças do avatar que serão ocultadas.
+		local isOperatorPart = d:FindFirstAncestor("Operador") ~= nil
+		if not isOperatorPart and (d:IsA("BasePart") or d:IsA("Decal")) then
+			table.insert(avatarParts, d)
+		end
 	end))
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	local an = char:FindFirstChild("Animate")
